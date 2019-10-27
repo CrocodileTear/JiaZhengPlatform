@@ -1,0 +1,60 @@
+html,body,.container-fluid,.content{
+	height: 100%;
+}
+*{
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.left {
+	position: absolute;
+	width: 100%;
+	top: 0;
+	bottom: 0;
+	background-color: #89bfd7;
+}
+.left .title {
+	font-size: 24px;
+	font-weight: 800;
+}
+.left ul > li {
+	font-size: 20px;
+	font-weight: 500;
+	cursor: pointer;
+}
+.current {
+	background-color: #c2cfd5;
+	width: 235px;
+	margin-left: -20px;
+}
+img {
+	width: 20px;
+	height: 20px;
+}
+.right {
+	box-sizing: border-box;
+	height: 100%;
+	padding: 20px;
+	background-color: #c2cfd5;
+}
+.right > .content {
+	box-sizing: border-box;
+	border-radius: 5px;
+	height: 100%;
+	padding: 1em;
+	background: url(../images/bg.jpg) no-repeat;
+}
+.right >.content >.mb_nav{
+	border-bottom: 1px solid #ccc;
+	line-height: 2em;
+	margin-bottom: .5em;
+}
+/*谷歌浏览器隐藏滚动条*/
+::-webkit-scrollbar{
+	display: none;
+}
+.scrollview {
+	position: absolute;
+	top: 100px;
+	bottom:500px;
+}

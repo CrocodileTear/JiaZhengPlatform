@@ -1,0 +1,286 @@
+<!-- 容器 -->
+<div class="container-fluid">
+	<br>
+	<!-- 按钮 -->
+	<button id="btn_add_waiter" class="btn btn-primary btn-sm mb-3">添加</button>
+	<button id="btn_bathDel_waiter" class="btn btn-danger btn-sm mb-3">批量删除</button>
+
+	<!-- / 按钮 -->
+	<!-- 表格 -->
+	<table class="table table-hover" id="waiter_table">
+		<thead>
+			<tr>
+				<td><input type="checkbox" id="btn_selectAll"></td>
+				<td>姓名</td>
+				<td>手机号</td>
+				<td>密码</td>
+				<td>操作</td>
+			</tr>
+		</thead>
+		<tbody>
+			
+		</tbody>
+	</table>
+	<!-- / 表格 -->
+</div>
+<!-- / 容器 -->
+
+<!-- 模态框 -->
+<div class="modal fade" id="waiterModal" tabindex="-1">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="exampleModal">添加服务员信息</h5>
+				<button type="button" class="close" onclick="closeWaiterModal()">
+					<span>&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<!-- 表单 -->
+				<form action="/register" id="waiter_form">
+					<!-- 姓名 -->
+					<div class="form-group row">
+						<label for="input_realname" class="col-2 text-center">姓名</label>
+						<div class="col-10">
+							<input id="input_realname" name="realname" type="text" class="form-control" placeholder="请输入2-6位汉字">
+							<div class="invalid-feedback">请输入2-6位汉字</div>
+						</div>
+					</div>
+					<!-- / 姓名 -->
+					<!-- 手机号 -->
+					<div class="form-group row">
+						<label for="input_telephone" class="col-2 text-center">手机号</label>
+						<div class="col-10">
+							<input id="input_telephone" name="telephone" type="text" class="form-control" placeholder="请输入11位电话号码">
+							<div class="invalid-feedback">请输入11位电话号码</div>
+						</div>
+					</div>
+					<!-- / 手机号 -->
+					<!-- 密码 -->
+					<div class="form-group row">
+						<label for="password" class="col-2 text-center">密码</label>
+						<div class="col-10">
+							<input id="input_password" name="password" type="text" class="form-control" placeholder="请输入密码(至少6位)">
+							<div class="invalid-feedback">请输入至少6为数字</div>
+						</div>
+					</div>
+					<!-- / 密码 -->
+				</form>
+				<!-- / 表单 -->
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" onclick="closeWaiterModal()">取消</button>
+					<button type="button" class="btn btn-primary" onclick="submitWaiter()">保存</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- / 模态框 -->
+
+
+<script>
+	//=======提前声明的代码
+	var baseURL = "http://59.110.225.187:6677";
+	var myId;  //最好将此处的id定义为全局变量，否则会污染变量
+	//重载数据
+	function reloadData(){
+		var url = baseURL+"/waiter/findAll";
+		$.get(url,function(result){
+			if(result.status === 200){
+				$("#waiter_table tbody").empty();
+				result.data.forEach(function(item){
+					$("#waiter_table tbody").append($(`
+						<tr>
+							<td><input type="checkbox" value=`+item.id+` /></td>
+							<td>`+item.realname+`</td>
+							<td>`+item.telephone+`</td>
+							<td>`+item.password+`</td>
+							<td>
+								<a class="btn_del_waiter" href="javascript:void(0)"><i class="fa fa-trash text-danger"></i></a>
+								<a class="btn_upd_waiter" id="btn_upd_waiter" href="javascript:void(0)"><i class="fa fa-edit text-info"></i></a>
+							</td>
+						</tr>
+					`));
+				});
+			}
+		});
+	}
+	//为全选按钮绑定事件
+	$("#btn_selectAll").click(function(){
+		if(this.checked){
+			$("#waiter_table input[type=checkbox]").attr("checked",true);
+		}else{
+			$("#waiter_table input[type=checkbox]").attr("checked",false);
+		}
+	});
+	//关闭模态框
+	function closeWaiterModal(){
+		$("#waiterModal").modal("hide");
+	}
+	
+	//=======文档加载完毕后执行
+	$(function(){
+		//1. 初始化数据
+		reloadData();
+		//2. 为添加按钮绑定事件
+		$("#btn_add_waiter").click(function(){
+			$("#waiterModal").modal("show");
+		});
+		//3. 监听模态框的关闭
+		$("#waiterModal").on("hidden.bs.modal",function(e){
+			$(this).find("form")[0].reset();
+		});
+		//表单验证
+		forms();
+	
+		//为批量删除绑定事件处理函数
+		$("#btn_bathDel_waiter").click(function(){
+			var ids = $("input[type=checkbox]:checked").map(function(index,item){
+				return $(item).val();
+			}).toArray();
+			var url = baseURL+"/waiter/batchDelete";
+			var data = "";
+			for(var index in ids){
+				var id = ids[index];
+				if(index == 0){
+					data += "ids="+id;
+				}else{
+					data += "&ids="+id;
+				}
+			}
+			alert(data);
+			$.post(url,data,function(result){
+				if(result.status === 200){
+					alert("删除成功");
+					reloadData();
+				}else{
+					alert(result.message);
+				}
+			});
+		});
+
+		//通过id删除/修改服务员信息
+		$("#waiter_table tbody").on("click","a",function(){
+			switch(this.className){
+				//通过id删除服务员信息
+				case "btn_del_waiter":
+					var id = $(this).parents("tr").find("input").val();
+					// alert(id);
+					var url = baseURL+"/waiter/deleteById";
+					var data = "id="+id;
+					$.get(url,data,function(result){
+						if(result.status === 200){
+							reloadData();
+							alert("删除成功");
+						}else{
+							alert("删除失败");
+						}
+					});
+				break;
+				//通过id修改服务员信息
+				case "btn_upd_waiter":
+					//点击修改图标，显示对应模态框进行修改
+					$("#waiterModal").modal("show");
+					myId = $(this).parents("tr").find("input").val();
+					//获取原始数据
+					var realname = this.parentNode.parentNode.children[1].innerText;
+					var telephone = this.parentNode.parentNode.children[2].innerText;
+					var password = this.parentNode.parentNode.children[3].innerText;
+
+					//将当前数据放到对应的模态框中
+					$("#waiter_form input[name=id]").val(id);
+					// alert(id);
+					$("#waiter_form input[name=realname]").val(realname);
+					$("#waiter_form input[name=telephone]").val(telephone);
+					$("#waiter_form input[name=password]").val(password);
+					var data = {
+						realname:realname,
+						telephone:telephone,
+						password:password
+					}
+				break;
+			}
+		});
+
+	});
+
+	//表单验证
+	function forms(){ 
+		//1.姓名验证
+		$("#input_realname").keyup(function(){
+			if(!(/^[\u4E00-\u9FA5]{2,6}$/).test(this.value)){
+				$("#input_realname").removeClass("is-valid");//移除
+				$(this).addClass("is-invalid");//点击时添加
+			}else{
+				$("#input_realname").removeClass("is-invalid");//移除
+				$(this).addClass("is-valid");//点击时添加
+			}
+		});
+		//2.密码验证
+		$("#input_password").keyup(function(){
+			if (!(/^\d{6,}$/).test(this.value)){
+				$("#input_password").removeClass("is-valid");//移除
+				$(this).addClass("is-invalid");//点击时添加
+			}else{
+				$("#input_password").removeClass("is-invalid");//移除
+				$(this).addClass("is-valid");//点击时添加
+			}
+		});
+		//3.手机号验证
+		$("#input_telephone").keyup(function(){
+			if (!(/^\d{11}$/).test(this.value)){
+				$("#input_telephone").removeClass("is-valid");//移除
+				$(this).addClass("is-invalid");//点击时添加
+			}else{
+				$("#input_telephone").removeClass("is-invalid");//移除
+				$(this).addClass("is-valid");//点击时添加
+			}
+		});
+		
+	}
+	
+	//提交表单(添加/修改服务员信息)
+	function submitWaiter(){
+		//1. 获取参数
+		var realname = $("#waiter_form input[name=realname]").val();
+		var telephone = $("#waiter_form input[name=telephone]").val();
+		var password = $("#waiter_form input[name=password]").val();
+		if(myId){
+			//如果id存在，即修改
+			var data = {
+				id:myId,
+				realname:realname,
+				telephone:telephone,
+				password:password
+			}
+			//将id置空，否则点击修改后再次点击添加时还是进行修改
+			myId = '';
+			//2. ajax
+			var url = baseURL+"/waiter/saveOrUpdate";
+			$.post(url,data,function(result){
+				if(result.status === 200){
+					closeWaiterModal();
+					reloadData();
+					alert("修改成功");
+				}else{
+					alert(result.message);
+				}
+			});
+			$("#waiterModal").modal("hide");
+		}else{
+			//id不存在，即添加
+			var data = {
+				realname:realname,
+				telephone:telephone,
+				password:password
+			}
+			var url = baseURL+"/waiter/saveOrUpdate";
+			$.post(url,data,function(){
+				reloadData();
+			});
+			$("#waiterModal").modal("hide");
+		}
+	}
+	
+</script>
+

@@ -1,0 +1,471 @@
+<!-- 容器 -->
+<div class="container-fluid">
+	<br>
+	<!-- 按钮 -->
+	<button id="btn_add_address" class="btn btn-primary btn-sm mb-3">添加</button>
+	<button id="btn_bathDel_address" class="btn btn-danger btn-sm mb-3">批量删除</button>
+	<div style="float:right" >
+		<select id="search_customerId" class="rounded-left rounded-right col-7.5"></select>
+		<button id="btn_find" class="btn btn-success btn-sm mb-2">查询</button>
+		<button id="btn_findBack" class="btn btn-info btn-sm mb-2">返回</button>
+	</div>
+	<!-- / 按钮 -->
+	<!-- 表格 -->
+	<table  class="table table-hover" id="address_table">
+		<thead>
+			<tr>
+				<td><input type="checkbox" id="btn_selectAll"></td>
+				<td>省份</td>
+				<td>城市</td>
+				<td>地区</td>
+				<td>地址</td>
+				<td>手机号</td>
+				<td>顾客</td>
+				<td>操作</td>
+			</tr>
+		</thead>
+		<tbody>
+			
+		</tbody>
+	</table>
+	<!-- / 表格 -->
+</div>
+<!-- / 容器 -->
+
+<!-- 模态框 -->
+<div class="modal fade" id="addressModal" tabindex="-1">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="exampleModal">添加地址信息</h5>
+				<button type="button" class="close" onclick="closeAddressModal()">
+					<span>&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<!-- 表单 -->
+				<form action="/register" id="address_form">
+					<!-- 省份 -->
+					<div class="form-group row">
+						<label for="input_province" class="col-2 text-center">省份</label>
+						<div class="col">
+							<select id="input_province" name="province" class="form-control">
+								<option selected="" disabled="">请选择省份</option>
+							</select>
+						</div>
+					</div>
+					<!-- / 省份 -->
+					<!-- 城市 -->
+					<div class="form-group row">
+						<label for="input_city" class="col-2 text-center">城市</label>
+						<div class="col">
+							<select id="input_city" name="city" class="form-control">
+								<option selected="" disabled="">请选择城市</option>
+							</select>
+						</div>
+					</div>
+					<!-- / 城市 -->
+					<!-- 地区 -->
+					<div class="form-group row">
+						<label for="input_area" class="col-2 text-center">地区</label>
+						<div class="col">
+							<select id="input_area" name="area" class="form-control">
+								<option selected="" disabled="">请选择地区</option>
+							</select>
+						</div>
+					</div>
+					<!-- / 地区 -->
+					<!-- 地址 -->
+					<div class="form-group row">
+						<label for="input_address" class="col-2 text-center">地址</label>
+						<div class="col">
+							<select id="input_address" name="address" class="form-control">
+								<option selected="" disabled="">请选择地址</option>
+								<option>一镇</option>
+								<option>二镇</option>
+								<option>三镇</option>
+								<option>四镇</option>
+								<option>五镇</option>
+								<option>六镇</option>
+								<option>七镇</option>
+							</select>
+						</div>
+					</div>
+					<!-- / 地址 -->
+					<!-- 手机号 -->
+					<div class="form-group row">
+						<label for="input_telephone" class="col-2 text-center">手机号</label>
+						<div class="col">
+							<input id="input_telephone" name="telephone" type="text" class="form-control" placeholder="请输入11位手机号">
+							<div class="invalid-feedback">请输入11位手机号</div>
+						</div>
+					</div>
+					<!-- / 手机号 -->
+					<!-- 顾客 -->
+					<div class="from-group row">
+						<label for="input_customerId" class="col-2 text-center">顾客</label>
+						<div class="col">
+							<select name="customerId" id="input_customerId" class="form-control" style="width: 50%"></select>
+						</div>
+					</div>
+					<br>
+					<!-- / 顾客 -->
+				</form>
+				<!-- / 表单 -->
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" onclick="closeAddressModal()">Close</button>
+					<button type="button" class="btn btn-primary" onclick="submitAddress()">Save Changes</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- / 模态框 -->
+
+<script>
+	//=======提前声明的代码
+	var baseURL = "http://59.110.225.187:6677";
+	var myId;
+
+	// 查询所有数据
+	function reloadData(){
+		var url = baseURL+"/address/findAll";
+		$.get(url,function(result){
+			if(result.status === 200){
+				$("#address_table tbody").empty();
+				result.data.forEach(function(item){
+					$("#address_table tbody").append($(`
+						<tr>
+							<td><input type="checkbox" value=`+item.id+` /></td>
+							<td>`+item.province+`</td>
+							<td>`+item.city+`</td>
+							<td>`+item.area+`</td>
+							<td>`+item.address+`</td>
+							<td>`+item.telephone+`</td>
+							<td>`+item.customerId+`</td>
+							<td>
+								<a class="btn_del_address" href="javascript:void(0)"><i class="fa fa-trash text-danger"></i></a>
+								<a class="btn_upd_address" href="javascript:void(0)"><i class="fa fa-edit text-info"></i></a>
+							</td>
+						</tr>
+					`));
+				});
+			}
+		});
+	}
+	//初始化顾客
+	// 在点击模态框显示的时候调用该函数
+	function initCustomer(){
+		var url = baseURL+"/customer/findAll";
+		$.get(url,function(result){
+			if(result.status === 200){
+				//清空下拉菜单
+				$("#address_form select[name=customerId]").empty();
+				//将栏目信息加加到下拉菜单中
+				result.data.forEach(function(item){
+					$("#address_form select[name=customerId").append(`
+							<option value="`+item.id+`">`+item.id+`</option>
+					`);
+				});
+			}
+		});
+	}
+	
+	//省市联动 
+	var province = document.getElementById("input_province"); 
+	var city = document.getElementById("input_city"); 
+	var area = document.getElementById("input_area"); 
+	var address = document.getElementById("input_address");
+	//创建省市数组 
+	var cityList = new Array(); 
+	cityList['甘肃省'] = ['兰州市','白银市','定西市','嘉峪关市','天水市','武威市','酒泉市','张掖市']; 
+	cityList['江西省'] = ['南昌市','抚州市','上饶市','九江市','景德镇市','鹰潭市','新余市','萍乡市']; 
+	cityList['河南省'] = ['郑州市','洛阳市','开封市','焦作市','鹤壁市','安阳市','濮阳市','商丘市']; 
+	cityList['湖北省'] = ['武汉市','十堰市','襄樊市','黄冈市','鄂州市','黄石市','咸宁市','宜昌市']; 
+	cityList['湖南省'] = ['长沙市','张家界市','常德市','益阳市','岳阳市','株洲市','衡阳市','永州市'];
+	cityList['四川省'] = ['成都市','广元市','绵阳市','德阳市','南充市','广安市','遂宁市','内江市'];
+	//创建市区数组 
+	var areaList = new Array(); 
+	areaList['兰州市'] = ["城关区", "七里河区", "西固区", "安宁区", "红古区"]; 
+	areaList['白银市'] = ["白银区", "平川区", "靖远县", "乌兰镇", "会宁县", "会师镇", "景泰县", "一条山镇"]; 
+	areaList['南昌市'] = ["东湖区", "西湖区", "青云谱区", "湾里区", "青山湖区", "南昌县", "莲塘镇", "新建县", "长堎镇", "安义县"]; 
+	areaList['抚州市'] = ["临川区", "南城县", "建昌镇", "黎川县", "日峰镇", "南丰县", "琴城镇", "崇仁县", "巴山镇"]; 
+	areaList['郑州市'] = ["中原区", "二七区", "管城回族区", "金水区", "上街区", "惠济区", "新郑市", "登封市", "新密市"];
+	areaList['洛阳市'] = ["西工区", "老城区", "瀍河回族区", "涧西区", "吉利区", "洛龙区", "偃师市", "孟津县", "城关镇"];
+	areaList['武汉市'] = ["江岸区", "江汉区", "硚口区", "汉阳区", "武昌区", "青山区", "洪山区", "东西湖区", "汉南区"];
+	areaList['长沙市'] = ["长沙市", "岳麓区", "芙蓉区", "天心区", "开福区", "雨花区", "浏阳市", "长沙县", "星沙镇", "望城县"];
+	areaList['成都市'] = ["青羊区", "锦江区", "金牛区", "武侯区", "成华区", "龙泉驿区", "青白江区", "新都区", "温江区", "都江堰市"];
+	for(var i in cityList){ 
+		province.add(new Option(i,i),null); 
+	} 
+	for(var j in areaList){ 
+		city.add(new Option(j,j),null); 
+	} 
+	//触发联动
+	province.onchange = function(){ 
+		var province = document.getElementById("input_province").value; 
+		var city = document.getElementById("input_city"); 
+		city.options.length = 0; 
+		for(var a in cityList[province]){ 
+			city.add(new Option(cityList[province][a],cityList[province][a]),null); 
+		} 
+	} 
+	city.onchange = function(){ 
+		var city = document.getElementById("input_city").value; 
+		var area = document.getElementById("input_area"); 
+		area.options.length = 0; 
+		for(var a in areaList[city]){ 
+			area.add(new Option(areaList[city][a]),(areaList[city][a]),null); 
+		} 
+	}
+
+	// 查询所有顾客id，放入搜索下拉框中
+	// 在页面加载的时候执行该函数
+	function searchCustomer(){
+		// 设置顾客的findAll请求地址
+		var url = baseURL+"/customer/findAll";
+		$.get(url,function(result){
+			//清空下拉菜单
+			$("#search_customerId").empty();
+			$('#search_customerId').append(`<option disabled selected>请选择顾客id</option>`);
+			// 将结果遍历，拿到id
+			result.data.forEach(function(item){
+				// 新创建节点，并追加到select中
+				/*
+				*第一个item.id放在value中，是为了根据顾客id查询的时候可以获取到此option的值
+				*第二个item.id放在option中间是为了显示
+				*/
+				// 将顾客id追加到搜索下拉框中
+				$('#search_customerId').append(`<option value="`+item.id+`">`+item.id+`</option>`);
+			})
+		});
+	}
+
+	//为全选按钮绑定事件
+	$("#btn_selectAll").click(function(){
+		if(this.checked){
+			$("#address_table input[type=checkbox]").attr("checked",true);
+		}else{
+			$("#address_table input[type=checkbox]").attr("checked",false);
+		}
+	});
+
+	//关闭模态框
+	function closeAddressModal(){
+		$("#addressModal").modal("hide");
+	}
+	
+	//=======文档加载完毕后执行
+	$(function(){
+		//1. 初始化数据
+		reloadData();
+		//2. 为添加按钮绑定事件
+		$("#btn_add_address").click(function(){
+			$("#addressModal").modal("show");
+		});
+		//3. 监听模态框的关闭
+		$("#addressModal").on("hidden.bs.modal",function(e){
+			$(this).find("form")[0].reset();
+		});
+		//4. 监听模态框的打开
+		$("#addressModal").on("show.bs.modal",function(){
+			// 初始化表单中的栏目下拉菜单;加载所有顾客id
+			initCustomer();
+		});
+		//表单验证
+		forms();
+	});
+
+	$(function(){
+		//初始化加载
+		reloadData();
+		//初始化查询下拉菜单;加载所有顾客id
+		searchCustomer();
+		//为批量删除绑定事件处理函数
+		$("#btn_bathDel_address").click(function(){
+			if(confirm("确定要删除吗？")){
+				var ids = $("input[type=checkbox]:checked").map(function(index,item){
+					return $(item).val();
+				}).toArray();
+				var url = baseURL+"/address/batchDelete";
+				var data = "";
+				for(var index in ids){
+					var id = ids[index];
+					if(index == 0){
+						data += "ids="+id;
+					}else{
+						data += "&ids="+id;
+					}
+				}
+				alert(data);
+				$.post(url,data,function(result){
+					if(result.status === 200){
+						alert("删除成功");
+						reloadData();
+					}else{
+						alert(result.message);
+					}
+				});
+			}
+
+		});
+
+		//根据顾客id查询对应的地址信息
+		$("#btn_find").on("click",function(){
+			var customerId = $("#search_customerId").val();  //将当前点击的option的值赋给customerId
+			// alert(customerId);
+			var url = baseURL+"/address/findByCustomerId";
+			var data = "id="+customerId;  //id是从顾客接口中查询到的id；customerId是地址接口中的
+			$.get(url,data,function(result){
+				//根据顾客id查询地址信息时,需要将原来表中的数据清空,再追加根据顾客id查询到的数据
+				$("#address_table tbody").empty();
+				result.data.forEach(function(item){
+					var newSearchTr = $(`
+						<tr>
+							<td><input type="checkbox" value="`+item.id+`" /></td>
+							<td>`+item.province+`</td>
+							<td>`+item.city+`</td>
+							<td>`+item.area+`</td>
+							<td>`+item.address+`</td>
+							<td>`+item.telephone+`</td>
+							<td>`+item.customerId+`</td>
+							<td>
+								<a class="btn_del_address" href="javascript:void(0)"><i class="fa fa-trash text-danger"></i></a>
+								<a class="btn_upd_address" href="javascript:void(0)"><i class="fa fa-edit text-info"></i></a>
+							</td>
+						</tr>
+					`);
+					//将新生成的newSearchTr追加到表格中
+					$("#address_table tbody").append(newSearchTr);
+				});
+			});
+		});
+		//还原查询
+		$("#btn_findBack").click(function(){
+			//点击按钮重新加载数据
+			reloadData();
+		});
+
+		//通过id删除/修改服务员信息
+		$("#address_table tbody").on("click","a",function(){
+			switch(this.className){
+				//通过id删除地址信息
+				case "btn_del_address":
+					if(confirm("确定要删除吗？")){
+						var id = $(this).parents("tr").find("input").val();
+						// alert(id);
+						var url = baseURL+"/address/deleteById";
+						var data = "id="+id;
+						$.get(url,data,function(result){
+							if(result.status === 200){
+								reloadData();
+								alert("删除成功");
+							}else{
+								alert("删除失败");
+							}
+						});
+					}
+
+				break;
+				//通过id修改地址信息
+				case "btn_upd_address":
+					//点击修改图标，显示对应模态框进行修改
+					$("#addressModal").modal("show");
+					myId = $(this).parents("tr").find("input").val();
+					//获取原始数据
+					var province = this.parentNode.parentNode.children[1].innerText;
+					var city = this.parentNode.parentNode.children[2].innerText;
+					var area = this.parentNode.parentNode.children[3].innerText;
+					var address = this.parentNode.parentNode.children[4].innerText;
+					var telephone = this.parentNode.parentNode.children[5].innerText;
+					var customerId = this.parentNode.parentNode.children[6].innerText;
+
+					//将当前数据放到对应的模态框中
+					$("#address_form input[name=id]").val(id);
+					$("#address_form select[name=province]").val(province);
+					$("#address_form select[name=city]").val(city);
+					$("#address_form select[name=area]").val(area);
+					$("#address_form select[name=address]").val(address);
+					$("#address_form input[name=telephone]").val(telephone);
+					$("#address_form select[name=customerId]").val(customerId);
+					console.log(data);
+					var data = {
+						province:province,
+						city:city,
+						area:area,
+						address:address,
+						telephone:telephone,
+						customerId:customerId
+					}
+				break;
+			}
+		});
+	});
+
+	function forms(){
+		//手机号验证
+		$("#input_telephone").keyup(function(){
+			if (!(/^\d{11}$/).test(this.value)){
+				$("#input_telephone").removeClass("is-valid");//移除
+				$(this).addClass("is-invalid");//点击时添加
+			}else{
+				$("#input_telephone").removeClass("is-invalid");//移除
+				$(this).addClass("is-valid");//点击时添加
+			}
+		});
+	}
+	
+	//提交表单(添加/修改地址信息)
+	function submitAddress(){
+		//1. 获取参数
+		var province = $("#address_form select[name=province]").val();
+		var city = $("#address_form select[name=city]").val();
+		var area = $("#address_form select[name=area]").val();
+		var address = $("#address_form select[name=address]").val();
+		var telephone = $("#address_form input[name=telephone]").val();
+		var customerId = $("#address_form select[name=customerId]").val();
+		if(myId){
+			//如果id存在，即修改
+			var data = {
+				id:myId,
+				province:province,
+				city:city,
+				area:area,
+				address:address,
+				telephone:telephone,
+				customerId:customerId
+			}
+			//将id置空，否则点击修改后再次点击添加时还是进行修改
+			myId = '';
+			//2. ajax
+			var url = baseURL+"/address/saveOrUpdate";
+			$.post(url,data,function(result){
+				if(result.status === 200){
+					closeAddressModal();
+					alert("修改成功");
+					reloadData();
+				}else{
+					alert(result.message);
+				}
+			});
+			$("#addressModal").modal("hide");
+		}else{
+			//id不存在，即添加
+			var data = {
+				province:province,
+				city:city,
+				area:area,
+				address:address,
+				telephone:telephone,
+				customerId:customerId
+			}
+			var url = baseURL+"/address/saveOrUpdate";
+			$.post(url,data,function(){
+				reloadData();
+			});
+			$("#addressModal").modal("hide");
+		}
+			
+	}
+
+</script>
